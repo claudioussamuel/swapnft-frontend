@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useAccount, useChainId, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { parseUnits } from "viem";
 import { usePoolKey } from "@/lib/poolKeyStore";
 import { useTokenInfo } from "@/hooks/useTokenInfo";
@@ -9,7 +9,7 @@ import { useApproval } from "@/hooks/useApproval";
 import { AmountInput } from "./AmountInput";
 import { TxStatus } from "./TxStatus";
 import {
-  ADDRESSES,
+  getChainAddresses,
   POOL_MANAGER_ABI,
 } from "@/lib/contracts";
 
@@ -26,6 +26,8 @@ const RANGE_PRESETS = [
 
 export function AddLiquidityPanel() {
   const { address, isConnected } = useAccount();
+  const  chain  = useChainId();
+  const addresses = getChainAddresses(chain);
   const { poolKey } = usePoolKey();
 
   const [amount0, setAmount0] = useState("");
@@ -45,8 +47,8 @@ export function AddLiquidityPanel() {
   const amount1Parsed = amount1 && info1.decimals !== undefined
     ? parseUnits(amount1, info1.decimals) : undefined;
 
-  const approval0 = useApproval(poolKey?.currency0, address, ADDRESSES.POOL_MANAGER, amount0Parsed);
-  const approval1 = useApproval(poolKey?.currency1, address, ADDRESSES.POOL_MANAGER, amount1Parsed);
+  const approval0 = useApproval(poolKey?.currency0, address, addresses.POOL_MANAGER, amount0Parsed);
+  const approval1 = useApproval(poolKey?.currency1, address, addresses.POOL_MANAGER, amount1Parsed);
 
   const { writeContractAsync } = useWriteContract();
 
@@ -61,9 +63,9 @@ export function AddLiquidityPanel() {
   // Estimate liquidity from amounts — simplified sqrt formula
   // In production use the v4 LiquidityAmounts library
   const estimatedLiquidity =
-    amount0Parsed && amount1Parsed
-      ? (amount0Parsed + amount1Parsed) / 2n  // placeholder
-      : 0n;
+  amount0Parsed && amount1Parsed
+    ? (amount0Parsed + amount1Parsed) / BigInt(2)  // placeholder
+    : BigInt(0);
 
   const reset = () => {
     setTxStep("idle");
@@ -94,7 +96,7 @@ export function AddLiquidityPanel() {
       setTxStep("confirm");
 
       const hash = await writeContractAsync({
-        address: ADDRESSES.POOL_MANAGER,
+        address: addresses.POOL_MANAGER,
         abi: POOL_MANAGER_ABI,
         functionName: "modifyLiquidity",
         args: [
@@ -102,7 +104,7 @@ export function AddLiquidityPanel() {
           {
             tickLower,
             tickUpper,
-            liquidityDelta: estimatedLiquidity > 0n ? estimatedLiquidity : 1000000n,
+            liquidityDelta: estimatedLiquidity > BigInt(0) ? estimatedLiquidity : BigInt(1000000),
             salt: "0x0000000000000000000000000000000000000000000000000000000000000000",
           },
           "0x",

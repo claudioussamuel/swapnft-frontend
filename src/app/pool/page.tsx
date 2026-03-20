@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useChainId } from "wagmi";
 import { Navbar } from "@/components/Navbar";
 import { PoolKeyForm } from "@/components/PoolKeyForm";
 import { SwapPanel } from "@/components/SwapPanel";
@@ -8,7 +9,7 @@ import { AddLiquidityPanel } from "@/components/AddLiquidityPanel";
 import { RemoveLiquidityPanel } from "@/components/RemoveLiquidityPanel";
 import { TierTable } from "@/components/TierTable";
 import { usePoolKey } from "@/lib/poolKeyStore";
-import { ADDRESSES } from "@/lib/contracts";
+import { getChainAddresses } from "@/lib/contracts";
 import Link from "next/link";
 
 type Tab = "swap" | "add" | "remove";
@@ -16,6 +17,8 @@ type Tab = "swap" | "add" | "remove";
 export default function PoolPage() {
   const [tab, setTab] = useState<Tab>("swap");
   const { poolKey } = usePoolKey();
+  const  chain  = useChainId();
+  const addresses = getChainAddresses(chain);
 
   return (
     <div className="app">
@@ -97,7 +100,7 @@ export default function PoolPage() {
                   <div className="pool-info-item">
                     <span className="pool-info-item__label">Hook</span>
                     <span className="pool-info-item__value pool-info-item__value--mono pool-info-item__value--accent">
-                      {ADDRESSES.HOOK.slice(0, 8)}…{ADDRESSES.HOOK.slice(-6)}
+                      {addresses.HOOK.slice(0, 8)}…{addresses.HOOK.slice(-6)}
                     </span>
                   </div>
                 </div>

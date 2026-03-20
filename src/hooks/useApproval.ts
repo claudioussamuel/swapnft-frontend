@@ -2,13 +2,13 @@
 
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { useState } from "react";
-import { ERC20_ABI, MAX_UINT256, ADDRESSES } from "@/lib/contracts";
+import { ERC20_ABI, MAX_UINT256 } from "@/lib/contracts";
 import { isAddress } from "viem";
 
 export function useApproval(
   tokenAddress: string | undefined,
   ownerAddress: string | undefined,
-  spender: `0x${string}` = ADDRESSES.POOL_MANAGER,
+  spender: `0x${string}`,
   requiredAmount?: bigint
 ) {
   const [approveTxHash, setApproveTxHash] = useState<`0x${string}` | undefined>();

@@ -1,14 +1,47 @@
-// ─── Addresses ────────────────────────────────────────────────────────────────
-export const ADDRESSES = {
-  POOL_MANAGER: (process.env.NEXT_PUBLIC_POOL_MANAGER ??
-    "0x0000000000000000000000000000000000000000") as `0x${string}`,
-  HOOK: (process.env.NEXT_PUBLIC_HOOK_ADDRESS ??
-    "0x0000000000000000000000000000000000000000") as `0x${string}`,
-  NFT: (process.env.NEXT_PUBLIC_NFT_ADDRESS ??
-    "0x0000000000000000000000000000000000000000") as `0x${string}`,
-  POSITION_MANAGER: (process.env.NEXT_PUBLIC_POSITION_MANAGER ??
-    "0x0000000000000000000000000000000000000000") as `0x${string}`,
-} as const;
+// ─── Chain-specific contract addresses ─────────────────────────────────────────
+export type SwapImpactAddresses = {
+  POOL_MANAGER: `0x${string}`
+  HOOK: `0x${string}`
+  NFT: `0x${string}`
+  POSITION_MANAGER: `0x${string}`
+}
+
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000" as const;
+
+const envAddress = (value?: string): `0x${string}` =>
+  value ? (value as `0x${string}`) : ZERO_ADDRESS;
+
+const chainAddressesById: Record<number, SwapImpactAddresses> = {
+  1301 : {
+    POOL_MANAGER: "0xE03A1074c86CFeDd5C142C4F04F1a1536e203543",
+    HOOK: "0x51C982655087c78b3280f0440B5d714683c320c0",
+    NFT: "0xd035b10DC2f0627393d255cbbDa4ef270eAEd906",
+    POSITION_MANAGER: "0x429ba70129df741B2Ca2a85BC3A2a3328e5c09b4",
+  },
+  11155111: {
+    POOL_MANAGER: "0xE03A1074c86CFeDd5C142C4F04F1a1536e203543",
+    HOOK: "0x51C982655087c78b3280f0440B5d714683c320c0",
+    NFT: "0xd035b10DC2f0627393d255cbbDa4ef270eAEd906",
+    POSITION_MANAGER: "0x429ba70129df741B2Ca2a85BC3A2a3328e5c09b4",
+  },
+  1: {
+    POOL_MANAGER: "0xE03A1074c86CFeDd5C142C4F04F1a1536e203543",
+    HOOK: "0x51C982655087c78b3280f0440B5d714683c320c0",
+    NFT: "0xd035b10DC2f0627393d255cbbDa4ef270eAEd906",
+    POSITION_MANAGER: "0x429ba70129df741B2Ca2a85BC3A2a3328e5c09b4",
+    },
+};
+
+const defaultChainId = Number(process.env.NEXT_PUBLIC_DEFAULT_CHAIN_ID ?? 31337);
+
+export function getChainAddresses(chainId?: number): SwapImpactAddresses {
+  if (!chainId) {
+    return chainAddressesById[defaultChainId] ?? chainAddressesById[31337];
+  }
+  return chainAddressesById[chainId] ?? chainAddressesById[defaultChainId] ?? chainAddressesById[31337];
+}
+
+export const ADDRESSES = getChainAddresses();
 
 // ─── Pool Manager ABI ──────────────────────────────────────────────────────────
 export const POOL_MANAGER_ABI = [

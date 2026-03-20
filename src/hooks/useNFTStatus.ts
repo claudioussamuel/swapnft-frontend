@@ -1,13 +1,15 @@
 "use client";
 
-import { useAccount, useReadContract, useReadContracts } from "wagmi";
-import { ADDRESSES, NFT_ABI, HOOK_ABI, TIER_META } from "@/lib/contracts";
+import { useAccount, useNetwork, useReadContract } from "wagmi";
+import { getChainAddresses, NFT_ABI, HOOK_ABI, TIER_META } from "@/lib/contracts";
 
 export function useNFTStatus() {
   const { address } = useAccount();
+  const { chain } = useNetwork();
+  const addresses = getChainAddresses(chain?.id);
 
   const { data: bestTier, refetch: refetchTier } = useReadContract({
-    address: ADDRESSES.NFT,
+    address: addresses.NFT,
     abi: NFT_ABI,
     functionName: "bestTierOf",
     args: address ? [address] : undefined,
@@ -15,7 +17,7 @@ export function useNFTStatus() {
   });
 
   const { data: feePreview, refetch: refetchFee } = useReadContract({
-    address: ADDRESSES.HOOK,
+    address: addresses.HOOK,
     abi: HOOK_ABI,
     functionName: "previewFee",
     args: address ? [address] : undefined,

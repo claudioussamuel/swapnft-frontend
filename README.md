@@ -28,10 +28,19 @@ Open [http://localhost:3000](http://localhost:3000).
 | Variable | Description |
 |---|---|
 | `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | Free at [cloud.walletconnect.com](https://cloud.walletconnect.com) |
-| `NEXT_PUBLIC_POOL_MANAGER` | Uniswap v4 PoolManager address |
-| `NEXT_PUBLIC_HOOK_ADDRESS` | Your deployed `SwapImpactFeesHook` address |
-| `NEXT_PUBLIC_NFT_ADDRESS` | Your deployed `SwapImpactNFT` address |
-| `NEXT_PUBLIC_POSITION_MANAGER` | v4-periphery PositionManager (for position reads) |
+| `NEXT_PUBLIC_DEFAULT_CHAIN_ID` | Chain ID used when no wallet chain is available (defaults to 31337) |
+| `NEXT_PUBLIC_POOL_MANAGER` | Uniswap v4 PoolManager address (default chain)
+| `NEXT_PUBLIC_HOOK_ADDRESS` | Your deployed `SwapImpactFeesHook` address (default chain)
+| `NEXT_PUBLIC_NFT_ADDRESS` | Your deployed `SwapImpactNFT` address (default chain)
+| `NEXT_PUBLIC_POSITION_MANAGER` | v4-periphery PositionManager (for position reads, default chain)
+| `NEXT_PUBLIC_POOL_MANAGER_SEPOLIA` | PoolManager address on Sepolia |
+| `NEXT_PUBLIC_HOOK_ADDRESS_SEPOLIA` | Hook address on Sepolia |
+| `NEXT_PUBLIC_NFT_ADDRESS_SEPOLIA` | NFT address on Sepolia |
+| `NEXT_PUBLIC_POSITION_MANAGER_SEPOLIA` | PositionManager address on Sepolia |
+| `NEXT_PUBLIC_POOL_MANAGER_MAINNET` | PoolManager address on Mainnet |
+| `NEXT_PUBLIC_HOOK_ADDRESS_MAINNET` | Hook address on Mainnet |
+| `NEXT_PUBLIC_NFT_ADDRESS_MAINNET` | NFT address on Mainnet |
+| `NEXT_PUBLIC_POSITION_MANAGER_MAINNET` | PositionManager on Mainnet |
 
 ---
 

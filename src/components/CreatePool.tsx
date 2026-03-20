@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useAccount, useChainId, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { isAddress } from "viem";
 import { TokenInput } from "./TokenInput";
 import {
-  ADDRESSES,
+  getChainAddresses,
   POOL_MANAGER_ABI,
   DYNAMIC_FEE_FLAG,
 } from "@/lib/contracts";
@@ -22,6 +22,8 @@ type Step = "idle" | "confirm" | "pending" | "success" | "error";
 
 export function CreatePool() {
   const { address, isConnected } = useAccount();
+  const  chain  = useChainId();
+  const addresses = getChainAddresses(chain);
 
   // ── Form state ────────────────────────────────────────────────────────────
   const [token0, setToken0] = useState("");
@@ -76,14 +78,14 @@ export function CreatePool() {
       currency1,
       fee: DYNAMIC_FEE_FLAG,
       tickSpacing,
-      hooks: ADDRESSES.HOOK,
+      hooks: addresses.HOOK,
     };
 
     setStep("confirm");
 
     try {
       const hash = await writeContractAsync({
-        address: ADDRESSES.POOL_MANAGER,
+        address: addresses.POOL_MANAGER,
         abi: POOL_MANAGER_ABI,
         functionName: "initialize",
         args: [poolKey, sqrtPriceX96],
@@ -92,7 +94,7 @@ export function CreatePool() {
       setTxHash(hash);
       setStep("pending");
 
-      const id = derivePoolId(currency0, currency1, DYNAMIC_FEE_FLAG, tickSpacing, ADDRESSES.HOOK);
+      const id = derivePoolId(currency0, currency1, DYNAMIC_FEE_FLAG, tickSpacing, addresses.HOOK);
       setPoolId(id);
       setStep("success");
     } catch (e: unknown) {
@@ -144,7 +146,7 @@ export function CreatePool() {
           <div className="create-pool__datum">
             <span className="create-pool__datum-label">Hook</span>
             <span className="create-pool__datum-value create-pool__datum-value--mono">
-              {ADDRESSES.HOOK.slice(0, 10)}…{ADDRESSES.HOOK.slice(-8)}
+                {addresses.HOOK.slice(0, 10)}…{addresses.HOOK.slice(-8)}
             </span>
           </div>
         </div>
@@ -250,7 +252,7 @@ export function CreatePool() {
           <div>
             <p className="create-pool__hook-name">SwapImpact Fees Hook</p>
             <p className="create-pool__hook-addr">
-              {ADDRESSES.HOOK.slice(0, 6)}…{ADDRESSES.HOOK.slice(-4)}
+              {addresses.HOOK.slice(0, 6)}…{addresses.HOOK.slice(-4)}
             </p>
           </div>
           <span className="create-pool__hook-pill">attached</span>

@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useAccount, useChainId, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { usePoolKey } from "@/lib/poolKeyStore";
 import { useTokenInfo } from "@/hooks/useTokenInfo";
 import { TxStatus } from "./TxStatus";
 import {
-  ADDRESSES,
+  getChainAddresses,
   POOL_MANAGER_ABI,
 } from "@/lib/contracts";
 
@@ -14,6 +14,8 @@ type TxStep = "idle" | "confirm" | "pending" | "success" | "error";
 
 export function RemoveLiquidityPanel() {
   const { address, isConnected } = useAccount();
+  const  chain  = useChainId();
+  const addresses = getChainAddresses(chain);
   const { poolKey } = usePoolKey();
 
   // In a real app these would come from reading the user's positions
@@ -39,7 +41,7 @@ export function RemoveLiquidityPanel() {
 
   const parsedLiquidity = liquidityAmount
     ? BigInt(Math.floor(parseFloat(liquidityAmount) * (percentage / 100)))
-    : 0n;
+    : BigInt(0);
 
   const handleRemove = useCallback(async () => {
     if (!poolKey || !address || !liquidityAmount) return;
@@ -49,7 +51,7 @@ export function RemoveLiquidityPanel() {
       setTxStep("confirm");
 
       const hash = await writeContractAsync({
-        address: ADDRESSES.POOL_MANAGER,
+        address: addresses.POOL_MANAGER,
         abi: POOL_MANAGER_ABI,
         functionName: "modifyLiquidity",
         args: [

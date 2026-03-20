@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useAccount, useChainId, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import { parseUnits, encodeAbiParameters, parseAbiParameters } from "viem";
 import { usePoolKey } from "@/lib/poolKeyStore";
 import { useTokenInfo } from "@/hooks/useTokenInfo";
@@ -11,7 +11,7 @@ import { useNFTStatus } from "@/hooks/useNFTStatus";
 import { AmountInput } from "./AmountInput";
 import { TxStatus } from "./TxStatus";
 import {
-  ADDRESSES,
+  getChainAddresses,
   POOL_MANAGER_ABI,
   MIN_SQRT_PRICE,
   MAX_SQRT_PRICE,
@@ -22,6 +22,8 @@ type TxStep = "idle" | "approving" | "confirm" | "pending" | "success" | "error"
 
 export function SwapPanel() {
   const { address, isConnected } = useAccount();
+  const  chain  = useChainId();
+  const addresses = getChainAddresses(chain);
   const { poolKey } = usePoolKey();
   const { tier, meta, fee: previewFee, hasNFT } = useNFTStatus();
 
@@ -45,7 +47,7 @@ export function SwapPanel() {
   const { needsApproval, approve, isApproving, refetchAllowance } = useApproval(
     tokenIn,
     address,
-    ADDRESSES.POOL_MANAGER,
+    addresses.POOL_MANAGER,
     amountInParsed
   );
 
@@ -84,7 +86,7 @@ export function SwapPanel() {
       );
 
       const hash = await writeContractAsync({
-        address: ADDRESSES.POOL_MANAGER,
+        address: addresses.POOL_MANAGER,
         abi: POOL_MANAGER_ABI,
         functionName: "swap",
         args: [
@@ -92,7 +94,7 @@ export function SwapPanel() {
           {
             zeroForOne,
             amountSpecified: -amountInParsed, // negative = exact input
-            sqrtPriceLimitX96: zeroForOne ? MIN_SQRT_PRICE + 1n : MAX_SQRT_PRICE - 1n,
+            sqrtPriceLimitX96: zeroForOne ? MIN_SQRT_PRICE + BigInt(1) : MAX_SQRT_PRICE - BigInt(1), // just inside the valid range to avoid front-running issues
           },
           hookData,
         ],
