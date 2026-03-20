@@ -32,13 +32,21 @@ const chainAddressesById: Record<number, SwapImpactAddresses> = {
     },
 };
 
-const defaultChainId = Number(process.env.NEXT_PUBLIC_DEFAULT_CHAIN_ID ?? 31337);
+const defaultChainId = Number(process.env.NEXT_PUBLIC_DEFAULT_CHAIN_ID ?? 1301);
+
+function getDefaultAddresses(): SwapImpactAddresses {
+  return (
+    chainAddressesById[defaultChainId] ??
+    chainAddressesById[1301] ??
+    Object.values(chainAddressesById)[0]
+  );
+}
 
 export function getChainAddresses(chainId?: number): SwapImpactAddresses {
-  if (!chainId) {
-    return chainAddressesById[defaultChainId] ?? chainAddressesById[31337];
+  if (chainId && chainAddressesById[chainId]) {
+    return chainAddressesById[chainId];
   }
-  return chainAddressesById[chainId] ?? chainAddressesById[defaultChainId] ?? chainAddressesById[31337];
+  return getDefaultAddresses();
 }
 
 export const ADDRESSES = getChainAddresses();

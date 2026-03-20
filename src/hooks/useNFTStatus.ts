@@ -1,12 +1,12 @@
 "use client";
 
-import { useAccount, useNetwork, useReadContract } from "wagmi";
+import { useAccount, useChainId, useReadContract } from "wagmi";
 import { getChainAddresses, NFT_ABI, HOOK_ABI, TIER_META } from "@/lib/contracts";
 
 export function useNFTStatus() {
   const { address } = useAccount();
-  const { chain } = useNetwork();
-  const addresses = getChainAddresses(chain?.id);
+  const chainId = useChainId();
+  const addresses = getChainAddresses(chainId);
 
   const { data: bestTier, refetch: refetchTier } = useReadContract({
     address: addresses.NFT,
