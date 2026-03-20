@@ -1,0 +1,71 @@
+import { Navbar } from "@/components/Navbar";
+import { CreatePool } from "@/components/CreatePool";
+import { TierTable } from "@/components/TierTable";
+import Link from "next/link";
+
+export default function Home() {
+  return (
+    <div className="app">
+      <Navbar />
+
+      <main className="main">
+        <section className="hero">
+          <div className="hero__eyebrow">Uniswap v4 Hook</div>
+          <h1 className="hero__title">
+            Swap large.<br />
+            <span className="hero__accent">Pay less.</span>
+          </h1>
+          <p className="hero__sub">
+            Every swap that moves the market earns you a tier NFT.
+            Your next trade gets a fee discount. The NFT burns after redemption.
+          </p>
+          <Link href="/pool" className="btn btn--ghost hero__cta">
+            Go to pool →
+          </Link>
+        </section>
+
+        <div className="grid">
+          <div className="card card--main">
+            <div className="card__header">
+              <h2 className="card__title">Create a pool</h2>
+              <p className="card__sub">Deploy a Uniswap v4 pool with the SwapImpact hook</p>
+            </div>
+            <CreatePool />
+          </div>
+
+          <div className="sidebar">
+            <div className="card">
+              <div className="card__header">
+                <h2 className="card__title">Impact tiers</h2>
+                <p className="card__sub">Earned by price impact on every swap</p>
+              </div>
+              <TierTable />
+            </div>
+
+            <div className="card card--info">
+              <h3 className="card__title card__title--sm">How it works</h3>
+              <ol className="how-list">
+                <li className="how-list__item">
+                  <span className="how-list__num">1</span>
+                  <span>Create a pool with this hook attached</span>
+                </li>
+                <li className="how-list__item">
+                  <span className="how-list__num">2</span>
+                  <span>Swap tokens — the hook measures your price impact and mints a tier NFT</span>
+                </li>
+                <li className="how-list__item">
+                  <span className="how-list__num">3</span>
+                  <span>Your next swap uses the discount and burns the NFT</span>
+                </li>
+                <li className="how-list__item">
+                  <span className="how-list__num">4</span>
+                  <span>A new NFT is minted based on the next swap's impact</span>
+                </li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
