@@ -35,8 +35,9 @@ export function useApproval(
     allowance !== undefined &&
     (allowance as bigint) < requiredAmount;
 
-  const approve = async () => {
-    if (!validToken) return;
+  // Returns the tx hash so callers can await the receipt themselves (Bug 5 fix)
+  const approve = async (): Promise<`0x${string}` | undefined> => {
+    if (!validToken) return undefined;
     const hash = await writeContractAsync({
       address: tokenAddress as `0x${string}`,
       abi: ERC20_ABI,
@@ -44,6 +45,7 @@ export function useApproval(
       args: [spender, MAX_UINT256],
     });
     setApproveTxHash(hash);
+    return hash;
   };
 
   return {

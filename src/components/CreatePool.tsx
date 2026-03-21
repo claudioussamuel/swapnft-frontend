@@ -1,9 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useAccount, useChainId, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
-import { isAddress } from "viem";
-import { TokenInput } from "./TokenInput";
 import {
   getChainAddresses,
   POOL_MANAGER_ABI,
@@ -25,9 +23,8 @@ export function CreatePool() {
   const  chain  = useChainId();
   const addresses = getChainAddresses(chain);
 
-  // ── Form state ────────────────────────────────────────────────────────────
-  const [token0, setToken0] = useState("");
-  const [token1, setToken1] = useState("");
+  const token0 = addresses.TOKEN_ZERO;
+  const token1 = addresses.TOKEN_ONE;
   const [tickSpacing, setTickSpacing] = useState(60);
   const [priceMode, setPriceMode] = useState<"preset" | "custom">("preset");
   const [presetPrice, setPresetPrice] = useState(0); // index into INITIAL_PRICE_OPTIONS
@@ -41,6 +38,11 @@ export function CreatePool() {
   const { writeContractAsync } = useWriteContract();
   const { isLoading: isMining, isSuccess: isMined } = useWaitForTransactionReceipt({ hash: txHash });
 
+  // Transition to success only after tx is confirmed on-chain (Bug 2 fix)
+  useEffect(() => {
+    if (isMined && step === "pending") setStep("success");
+  }, [isMined, step]);
+
   // ── Derived values ────────────────────────────────────────────────────────
   const sqrtPriceX96 =
     priceMode === "preset"
@@ -49,19 +51,13 @@ export function CreatePool() {
 
   const validate = useCallback(() => {
     const errs: typeof errors = {};
-    if (!isAddress(token0)) errs.token0 = "Enter a valid token address";
-    if (!isAddress(token1)) errs.token1 = "Enter a valid token address";
-    if (token0.toLowerCase() === token1.toLowerCase()) {
-      errs.token0 = "Tokens must be different";
-      errs.token1 = "Tokens must be different";
-    }
     if (priceMode === "custom") {
       const p = parseFloat(customPrice);
       if (isNaN(p) || p <= 0) errs.price = "Enter a positive price";
     }
     setErrors(errs);
     return Object.keys(errs).length === 0;
-  }, [token0, token1, customPrice, priceMode]);
+  }, [customPrice, priceMode]);
 
   // ── Submit ─────────────────────────────────────────────────────────────────
   const handleCreate = async () => {
@@ -92,11 +88,10 @@ export function CreatePool() {
       });
 
       setTxHash(hash);
-      setStep("pending");
-
+      // Derive pool ID immediately (doesn't need waiting)
       const id = derivePoolId(currency0, currency1, DYNAMIC_FEE_FLAG, tickSpacing, addresses.HOOK);
       setPoolId(id);
-      setStep("success");
+      setStep("pending"); // success is set by the useEffect above once isMined
     } catch (e: unknown) {
       console.error(e);
       setStep("error");
@@ -107,8 +102,6 @@ export function CreatePool() {
     setStep("idle");
     setTxHash(undefined);
     setPoolId(undefined);
-    setToken0("");
-    setToken1("");
     setErrors({});
   };
 
@@ -162,25 +155,23 @@ export function CreatePool() {
       <div className="create-pool__section">
         <h3 className="create-pool__section-title">Token pair</h3>
         <div className="create-pool__pair">
-          <TokenInput
-            label="Token A"
-            value={token0}
-            onChange={setToken0}
-            placeholder="0x token address"
-            error={errors.token0}
-          />
+          <div className="token-input">
+            <label className="token-input__label">Token A</label>
+            <div className="token-input__field token-input__field--readonly">
+              {token0}
+            </div>
+          </div>
           <div className="create-pool__pair-divider">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M8 2v12M3 9l5 5 5-5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
-          <TokenInput
-            label="Token B"
-            value={token1}
-            onChange={setToken1}
-            placeholder="0x token address"
-            error={errors.token1}
-          />
+          <div className="token-input">
+            <label className="token-input__label">Token B</label>
+            <div className="token-input__field token-input__field--readonly">
+              {token1}
+            </div>
+          </div>
         </div>
       </div>
 

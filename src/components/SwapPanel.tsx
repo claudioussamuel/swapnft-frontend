@@ -1,64 +1,46 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useAccount, useChainId, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
-import { parseUnits, encodeAbiParameters, parseAbiParameters } from "viem";
+import { useAccount, useChainId } from "wagmi";
+import { parseUnits } from "viem";
 import { usePoolKey } from "@/lib/poolKeyStore";
 import { useTokenInfo } from "@/hooks/useTokenInfo";
 import { useTokenBalance } from "@/hooks/useTokenBalance";
-import { useApproval } from "@/hooks/useApproval";
 import { useNFTStatus } from "@/hooks/useNFTStatus";
+import { useUniversalRouterSwap } from "@/hooks/useUniversalRouterSwap";
 import { AmountInput } from "./AmountInput";
 import { TxStatus } from "./TxStatus";
 import {
   getChainAddresses,
-  POOL_MANAGER_ABI,
-  MIN_SQRT_PRICE,
-  MAX_SQRT_PRICE,
 } from "@/lib/contracts";
 import { formatFee } from "@/lib/poolMath";
 
-type TxStep = "idle" | "approving" | "confirm" | "pending" | "success" | "error";
-
 export function SwapPanel() {
   const { address, isConnected } = useAccount();
-  const  chain  = useChainId();
+  const chain = useChainId();
   const addresses = getChainAddresses(chain);
   const { poolKey } = usePoolKey();
   const { tier, meta, fee: previewFee, hasNFT } = useNFTStatus();
 
   const [amountIn, setAmountIn] = useState("");
   const [zeroForOne, setZeroForOne] = useState(true);
-  const [txStep, setTxStep] = useState<TxStep>("idle");
-  const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
-  const [error, setError] = useState("");
 
-  const tokenIn  = poolKey ? (zeroForOne ? poolKey.currency0 : poolKey.currency1) : undefined;
+  const tokenIn = poolKey ? (zeroForOne ? poolKey.currency0 : poolKey.currency1) : undefined;
   const tokenOut = poolKey ? (zeroForOne ? poolKey.currency1 : poolKey.currency0) : undefined;
 
-  const infoIn  = useTokenInfo(tokenIn);
+  const infoIn = useTokenInfo(tokenIn);
   const infoOut = useTokenInfo(tokenOut);
-  const balIn   = useTokenBalance(tokenIn, address);
+  const balIn = useTokenBalance(tokenIn, address);
 
   const amountInParsed = amountIn && infoIn.decimals !== undefined
     ? parseUnits(amountIn, infoIn.decimals)
     : undefined;
 
-  const { needsApproval, approve, isApproving, refetchAllowance } = useApproval(
-    tokenIn,
-    address,
-    addresses.POOL_MANAGER,
-    amountInParsed
-  );
-
-  const { writeContractAsync } = useWriteContract();
-  const { isSuccess: isMined } = useWaitForTransactionReceipt({ hash: txHash });
+  // Use Universal Router swap flow with Permit2
+  const { swap, txStep, txHash, error, isMined } = useUniversalRouterSwap();
 
   const reset = () => {
-    setTxStep("idle");
-    setTxHash(undefined);
     setAmountIn("");
-    setError("");
   };
 
   const flip = () => {
@@ -67,51 +49,20 @@ export function SwapPanel() {
   };
 
   const handleSwap = useCallback(async () => {
-    if (!poolKey || !address || !amountInParsed) return;
-    setError("");
+    if (!poolKey || !address || !amountInParsed || !tokenIn || !tokenOut) return;
 
-    try {
-      if (needsApproval) {
-        setTxStep("approving");
-        await approve();
-        await refetchAllowance();
-      }
+    // Execute the Universal Router swap with Permit2
+    await swap({
+      poolKey,
+      tokenIn: tokenIn as `0x${string}`,
+      tokenOut: tokenOut as `0x${string}`,
+      amountIn: amountInParsed,
+      amountOutMinimum: BigInt(0), // Set slippage tolerance as needed
+      zeroForOne,
+    });
 
-      setTxStep("confirm");
-
-      // hookData must carry the real swapper address
-      const hookData = encodeAbiParameters(
-        parseAbiParameters("address"),
-        [address]
-      );
-
-      const hash = await writeContractAsync({
-        address: addresses.POOL_MANAGER,
-        abi: POOL_MANAGER_ABI,
-        functionName: "swap",
-        args: [
-          poolKey,
-          {
-            zeroForOne,
-            amountSpecified: -amountInParsed, // negative = exact input
-            sqrtPriceLimitX96: zeroForOne ? MIN_SQRT_PRICE + BigInt(1) : MAX_SQRT_PRICE - BigInt(1), // just inside the valid range to avoid front-running issues
-          },
-          hookData,
-        ],
-      });
-
-      setTxHash(hash);
-      setTxStep("pending");
-
-      // optimistically move to success; useWaitForTransactionReceipt handles mining
-      setTxStep("success");
-      balIn.refetch();
-    } catch (e: unknown) {
-      console.error(e);
-      setError(e instanceof Error ? e.message : "Unknown error");
-      setTxStep("error");
-    }
-  }, [poolKey, address, amountInParsed, zeroForOne, needsApproval, approve, refetchAllowance, writeContractAsync, balIn]);
+    balIn.refetch();
+  }, [poolKey, address, amountInParsed, tokenIn, tokenOut, zeroForOne, swap, balIn]);
 
   if (!poolKey) {
     return (
@@ -180,6 +131,7 @@ export function SwapPanel() {
           {infoIn.symbol ?? "token0"} → {infoOut.symbol ?? "token1"}
         </span>
       </div>
+      <p className="panel__note">Use the flip icon between input and output fields to swap direction.</p>
 
       <TxStatus
         status={txStep}
@@ -196,16 +148,14 @@ export function SwapPanel() {
           !isConnected ||
           !amountIn ||
           parseFloat(amountIn) <= 0 ||
-          (txStep !== "idle" && txStep !== "error")
+          (txStep !== "idle" && txStep !== "error" && txStep !== "success")
         }
         type="button"
       >
         {!isConnected
           ? "Connect wallet"
-          : needsApproval
-          ? `Approve ${infoIn.symbol ?? "token"}`
-          : txStep === "approving" ? "Approving…"
-          : txStep === "confirm"  ? "Confirm in wallet…"
+          : txStep === "permitting" ? "Approving…"
+          : txStep === "swapping"  ? "Confirm in wallet…"
           : txStep === "pending"  ? "Swapping…"
           : txStep === "success"  ? "Swap again"
           : "Swap"}

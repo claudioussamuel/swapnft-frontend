@@ -1,21 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { isAddress } from "viem";
+import { useChainId } from "wagmi";
 import { useTokenInfo } from "@/hooks/useTokenInfo";
 import { TICK_SPACING_OPTIONS } from "@/lib/poolMath";
 import { usePoolKey } from "@/lib/poolKeyStore";
-import { ADDRESSES } from "@/lib/contracts";
+import { getChainAddresses } from "@/lib/contracts";
 
 export function PoolKeyForm({ onSet }: { onSet?: () => void }) {
   const { buildPoolKey, setPoolKey, poolKey } = usePoolKey();
-  const [tokenA, setTokenA] = useState(poolKey ? poolKey.currency0 : "");
-  const [tokenB, setTokenB] = useState(poolKey ? poolKey.currency1 : "");
+  const chain = useChainId();
+  const addresses = getChainAddresses(chain);
+  const tokenA = addresses.TOKEN_ZERO;
+  const tokenB = addresses.TOKEN_ONE;
   const [tickSpacing, setTickSpacing] = useState(poolKey?.tickSpacing ?? 60);
   const [errors, setErrors] = useState<{ a?: string; b?: string }>({});
 
   const infoA = useTokenInfo(tokenA);
   const infoB = useTokenInfo(tokenB);
+
+  useEffect(() => {
+    if (poolKey) return;
+    if (!isAddress(tokenA) || !isAddress(tokenB)) return;
+    setPoolKey(buildPoolKey(tokenA, tokenB, tickSpacing));
+  }, [poolKey, tokenA, tokenB, tickSpacing, setPoolKey, buildPoolKey]);
 
   const handleSet = () => {
     const errs: typeof errors = {};
@@ -38,7 +47,7 @@ export function PoolKeyForm({ onSet }: { onSet?: () => void }) {
           <input
             className={`pki ${errors.a ? "pki--error" : infoA.symbol ? "pki--valid" : ""}`}
             value={tokenA}
-            onChange={e => setTokenA(e.target.value)}
+            readOnly
             placeholder="Token A address"
             spellCheck={false}
           />
@@ -52,7 +61,7 @@ export function PoolKeyForm({ onSet }: { onSet?: () => void }) {
           <input
             className={`pki ${errors.b ? "pki--error" : infoB.symbol ? "pki--valid" : ""}`}
             value={tokenB}
-            onChange={e => setTokenB(e.target.value)}
+            readOnly
             placeholder="Token B address"
             spellCheck={false}
           />
@@ -76,6 +85,7 @@ export function PoolKeyForm({ onSet }: { onSet?: () => void }) {
         <button className="btn btn--ghost btn--sm" onClick={handleSet} type="button">
           Set pool
         </button>
+        <span className="pool-key-form__hint">Auto-set on page load (with current tick spacing)</span>
       </div>
 
       {poolKey && (
@@ -88,7 +98,7 @@ export function PoolKeyForm({ onSet }: { onSet?: () => void }) {
             {" · tick "}
             {poolKey.tickSpacing}
             {" · hook "}
-            {ADDRESSES.HOOK.slice(0, 6)}…
+            {addresses.HOOK.slice(0, 6)}…
           </span>
         </div>
       )}

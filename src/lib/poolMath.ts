@@ -1,11 +1,27 @@
 import { encodePacked, keccak256, getAddress } from "viem";
 
+// ─── Integer square root (Newton's method) ────────────────────────────────────
+export function bigIntSqrt(n: bigint): bigint {
+  if (n < 0n) throw new Error("sqrt of negative");
+  if (n === 0n) return 0n;
+  let x = n;
+  let y = (x + 1n) / 2n;
+  while (y < x) { x = y; y = (x + n / x) / 2n; }
+  return x;
+}
+
 // ─── sqrtPriceX96 from price ratio ────────────────────────────────────────────
 // price = token1 per token0
 // sqrtPriceX96 = sqrt(price) * 2^96
+// We avoid float overflow by computing sqrt(price * 2^192) purely in BigInt.
 export function priceToSqrtPriceX96(price: number): bigint {
-  const sqrt = Math.sqrt(price);
-  return BigInt(Math.floor(sqrt * 2 ** 96));
+  const Q96 = BigInt(2) ** BigInt(96);
+  // Scale price by 1e18 so we can express it as a bigint without decimals
+  const SCALE = BigInt(1_000_000_000_000_000_000);
+  const priceScaled = BigInt(Math.round(price * 1e18));
+  // sqrt(price) * 2^96 = sqrt(priceScaled * 2^192 / SCALE)
+  const radicand = priceScaled * Q96 * Q96 / SCALE;
+  return bigIntSqrt(radicand);
 }
 
 // Common starting prices

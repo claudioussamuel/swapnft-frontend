@@ -1,6 +1,6 @@
 "use client";
 
-type Status = "idle" | "approving" | "confirm" | "pending" | "success" | "error";
+type Status = "idle" | "approving" | "confirm" | "pending" | "success" | "error" | "permitting" | "swapping";
 
 interface TxStatusProps {
   status: Status;
@@ -19,16 +19,16 @@ export function TxStatus({ status, txHash, successMessage, errorMessage, onReset
 
   return (
     <div className={`tx-status tx-status--${status}`}>
-      {status === "approving" && (
+      {(status === "approving" || status === "permitting") && (
         <>
           <span className="spinner" />
-          <span>Approval transaction pending…</span>
+          <span>{status === "permitting" ? "Setting up Permit2 approval…" : "Approval transaction pending…"}</span>
         </>
       )}
-      {status === "confirm" && (
+      {(status === "confirm" || status === "swapping") && (
         <>
           <span className="spinner" />
-          <span>Confirm in your wallet…</span>
+          <span>{status === "swapping" ? "Confirm swap in your wallet…" : "Confirm in your wallet…"}</span>
         </>
       )}
       {status === "pending" && (

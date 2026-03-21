@@ -1,32 +1,36 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useAccount, useChainId, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useAccount, useChainId, useWriteContract } from "wagmi";
+import { waitForTransactionReceipt } from "@wagmi/core";
 import { parseUnits } from "viem";
 import { usePoolKey } from "@/lib/poolKeyStore";
 import { useTokenInfo } from "@/hooks/useTokenInfo";
 import { useApproval } from "@/hooks/useApproval";
+import { bigIntSqrt } from "@/lib/poolMath";
 import { AmountInput } from "./AmountInput";
 import { TxStatus } from "./TxStatus";
 import {
   getChainAddresses,
-  POOL_MANAGER_ABI,
+  POOL_MODIFY_LIQUIDITY_TEST_ABI,
 } from "@/lib/contracts";
+import { config } from "@/lib/wagmi";
 
 type TxStep = "idle" | "approving" | "confirm" | "pending" | "success" | "error";
 
 // Common tick range presets
 const RANGE_PRESETS = [
   { label: "Full range", tickLower: -887220, tickUpper: 887220 },
-  { label: "±10%",       tickLower: -1000,   tickUpper: 1000   },
-  { label: "±5%",        tickLower: -500,    tickUpper: 500    },
-  { label: "±1%",        tickLower: -100,    tickUpper: 100    },
-  { label: "Custom",     tickLower: null,    tickUpper: null   },
+  { label: "±10%", tickLower: -1000, tickUpper: 1000 },
+  { label: "±5%", tickLower: -500, tickUpper: 500 },
+  { label: "±1%", tickLower: -100, tickUpper: 100 },
+  { label: "Custom", tickLower: null, tickUpper: null },
 ] as const;
+
 
 export function AddLiquidityPanel() {
   const { address, isConnected } = useAccount();
-  const  chain  = useChainId();
+  const chain = useChainId();
   const addresses = getChainAddresses(chain);
   const { poolKey } = usePoolKey();
 
@@ -47,8 +51,10 @@ export function AddLiquidityPanel() {
   const amount1Parsed = amount1 && info1.decimals !== undefined
     ? parseUnits(amount1, info1.decimals) : undefined;
 
-  const approval0 = useApproval(poolKey?.currency0, address, addresses.POOL_MANAGER, amount0Parsed);
-  const approval1 = useApproval(poolKey?.currency1, address, addresses.POOL_MANAGER, amount1Parsed);
+  // Bug fix: Uniswap v4's test router uses plain ERC20 transferFrom. 
+  // We approve the POOL_MODIFY_LIQUIDITY_TEST router instead of PERMIT2.
+  const approval0 = useApproval(poolKey?.currency0, address, addresses.POOL_MODIFY_LIQUIDITY_TEST, amount0Parsed);
+  const approval1 = useApproval(poolKey?.currency1, address, addresses.POOL_MODIFY_LIQUIDITY_TEST, amount1Parsed);
 
   const { writeContractAsync } = useWriteContract();
 
@@ -60,12 +66,12 @@ export function AddLiquidityPanel() {
     ? selectedRange.tickUpper
     : parseInt(customUpper) || 1200;
 
-  // Estimate liquidity from amounts — simplified sqrt formula
-  // In production use the v4 LiquidityAmounts library
+  // Bug 4 fix: Use sqrt(amount0 * amount1) instead of the wrong average formula.
+  // This is a reasonable approximation of the LP liquidity for a given price range.
   const estimatedLiquidity =
-  amount0Parsed && amount1Parsed
-    ? (amount0Parsed + amount1Parsed) / BigInt(2)  // placeholder
-    : BigInt(0);
+    amount0Parsed && amount1Parsed && amount0Parsed > BigInt(0) && amount1Parsed > BigInt(0)
+      ? bigIntSqrt(amount0Parsed * amount1Parsed)
+      : BigInt(0);
 
   const reset = () => {
     setTxStep("idle");
@@ -80,38 +86,56 @@ export function AddLiquidityPanel() {
     setError("");
 
     try {
-      // Approve token0 if needed
+      // ── Step 1: ERC20 → Permit2 approvals (Bug 3 & 5 fix) ─────────────────
       if (approval0.needsApproval) {
         setTxStep("approving");
-        await approval0.approve();
+        const hash = await approval0.approve();
+        if (hash) {
+          // Bug 5 fix: Wait for the approval tx to be mined before refetching
+          await waitForTransactionReceipt(config, { hash });
+        }
         await approval0.refetchAllowance();
       }
-      // Approve token1 if needed
       if (approval1.needsApproval) {
         setTxStep("approving");
-        await approval1.approve();
+        const hash = await approval1.approve();
+        if (hash) {
+          await waitForTransactionReceipt(config, { hash });
+        }
         await approval1.refetchAllowance();
       }
 
+      // ── Step 2: Execute modifyLiquidity on the Test Router ──────────────────
       setTxStep("confirm");
 
+      const liquidityDelta = estimatedLiquidity > BigInt(0) ? estimatedLiquidity : BigInt(1_000_000);
+
       const hash = await writeContractAsync({
-        address: addresses.POOL_MANAGER,
-        abi: POOL_MANAGER_ABI,
-        functionName: "modifyLiquidity",
+        address: addresses.POOL_MODIFY_LIQUIDITY_TEST,
+        abi: POOL_MODIFY_LIQUIDITY_TEST_ABI,
+        functionName: 'modifyLiquidity',
         args: [
-          poolKey,
+          {
+            currency0: poolKey.currency0,
+            currency1: poolKey.currency1,
+            fee: poolKey.fee,
+            tickSpacing: poolKey.tickSpacing,
+            hooks: poolKey.hooks,
+          },
           {
             tickLower,
             tickUpper,
-            liquidityDelta: estimatedLiquidity > BigInt(0) ? estimatedLiquidity : BigInt(1000000),
-            salt: "0x0000000000000000000000000000000000000000000000000000000000000000",
+            liquidityDelta,
+            salt: '0x0000000000000000000000000000000000000000000000000000000000000000' as `0x${string}`,
           },
-          "0x",
+          '0x',
         ],
       });
 
       setTxHash(hash);
+      setTxStep("pending");
+
+      await waitForTransactionReceipt(config, { hash });
       setTxStep("success");
     } catch (e: unknown) {
       console.error(e);
@@ -121,7 +145,7 @@ export function AddLiquidityPanel() {
   }, [
     poolKey, address, amount0Parsed, amount1Parsed,
     approval0, approval1, tickLower, tickUpper,
-    estimatedLiquidity, writeContractAsync,
+    estimatedLiquidity, writeContractAsync, addresses,
   ]);
 
   if (!poolKey) {
@@ -225,13 +249,11 @@ export function AddLiquidityPanel() {
       >
         {!isConnected
           ? "Connect wallet"
-          : approval0.needsApproval || approval1.needsApproval
-          ? "Approve tokens"
           : txStep === "approving" ? "Approving…"
-          : txStep === "confirm"  ? "Confirm in wallet…"
-          : txStep === "pending"  ? "Adding liquidity…"
-          : txStep === "success"  ? "Add more"
-          : "Add liquidity"}
+            : txStep === "confirm" ? "Confirm in wallet…"
+              : txStep === "pending" ? "Adding liquidity…"
+                : txStep === "success" ? "Add more"
+                  : "Add liquidity"}
       </button>
     </div>
   );

@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useChainId } from "wagmi";
 import { Navbar } from "@/components/Navbar";
-import { PoolKeyForm } from "@/components/PoolKeyForm";
 import { SwapPanel } from "@/components/SwapPanel";
 import { AddLiquidityPanel } from "@/components/AddLiquidityPanel";
 import { RemoveLiquidityPanel } from "@/components/RemoveLiquidityPanel";
@@ -16,9 +15,17 @@ type Tab = "swap" | "add" | "remove";
 
 export default function PoolPage() {
   const [tab, setTab] = useState<Tab>("swap");
-  const { poolKey } = usePoolKey();
+  const { poolKey, setPoolKey, buildPoolKey } = usePoolKey();
   const  chain  = useChainId();
   const addresses = getChainAddresses(chain);
+
+  useEffect(() => {
+    if (poolKey) return;
+    const tokenA = addresses.TOKEN_ZERO;
+    const tokenB = addresses.TOKEN_ONE;
+    if (!tokenA || !tokenB) return;
+    setPoolKey(buildPoolKey(tokenA, tokenB, 60));
+  }, [poolKey, addresses.TOKEN_ZERO, addresses.TOKEN_ONE, setPoolKey, buildPoolKey]);
 
   return (
     <div className="app">
@@ -40,10 +47,7 @@ export default function PoolPage() {
           </div>
         </div>
 
-        {/* Pool key selector — shared across all tabs */}
-        <div className="pool-key-wrapper">
-          <PoolKeyForm />
-        </div>
+        {/* Pool key is auto-selected from chain addresses (no manual pool key form needed) */}
 
         <div className="pool-grid">
           {/* Left: tab panels */}

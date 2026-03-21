@@ -14,7 +14,7 @@ type TxStep = "idle" | "confirm" | "pending" | "success" | "error";
 
 export function RemoveLiquidityPanel() {
   const { address, isConnected } = useAccount();
-  const  chain  = useChainId();
+  const chain = useChainId();
   const addresses = getChainAddresses(chain);
   const { poolKey } = usePoolKey();
 
@@ -194,9 +194,9 @@ export function RemoveLiquidityPanel() {
         {!isConnected
           ? "Connect wallet"
           : txStep === "confirm" ? "Confirm in wallet…"
-          : txStep === "pending" ? "Removing…"
-          : txStep === "success" ? "Remove more"
-          : `Remove ${percentage < 100 ? percentage + "% of" : "all"} liquidity`}
+            : txStep === "pending" ? "Removing…"
+              : txStep === "success" ? "Remove more"
+                : `Remove ${percentage < 100 ? percentage + "% of" : "all"} liquidity`}
       </button>
     </div>
   );
