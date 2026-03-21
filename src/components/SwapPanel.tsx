@@ -78,7 +78,7 @@ export function SwapPanel() {
       {hasNFT && (
         <div className="panel__nft-notice" style={{ "--tier-color": meta.color } as React.CSSProperties}>
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <polygon points="7,1 8.8,4.8 13,5.5 10,8.4 10.7,12.6 7,10.6 3.3,12.6 4,8.4 1,5.5 5.2,4.8" fill="currentColor"/>
+            <polygon points="7,1 8.8,4.8 13,5.5 10,8.4 10.7,12.6 7,10.6 3.3,12.6 4,8.4 1,5.5 5.2,4.8" fill="currentColor" />
           </svg>
           <span>
             <strong>{meta.name}</strong> NFT active — this swap will cost{" "}
@@ -99,7 +99,7 @@ export function SwapPanel() {
 
         <button className="panel__flip" onClick={flip} type="button" title="Flip tokens">
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-            <path d="M9 2v14M4 12l5 5 5-5M4 6l5-5 5 5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M9 2v14M4 12l5 5 5-5M4 6l5-5 5 5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
 
@@ -155,10 +155,10 @@ export function SwapPanel() {
         {!isConnected
           ? "Connect wallet"
           : txStep === "permitting" ? "Approving…"
-          : txStep === "swapping"  ? "Confirm in wallet…"
-          : txStep === "pending"  ? "Swapping…"
-          : txStep === "success"  ? "Swap again"
-          : "Swap"}
+            : txStep === "swapping" ? "Confirm in wallet…"
+              : txStep === "pending" ? "Swapping…"
+                : txStep === "success" ? "Swap again"
+                  : "Swap"}
       </button>
     </div>
   );

@@ -2,11 +2,11 @@ import { encodePacked, keccak256, getAddress } from "viem";
 
 // ─── Integer square root (Newton's method) ────────────────────────────────────
 export function bigIntSqrt(n: bigint): bigint {
-  if (n < 0n) throw new Error("sqrt of negative");
-  if (n === 0n) return 0n;
+  if (n < BigInt(0)) throw new Error("sqrt of negative");
+  if (n === BigInt(0)) return BigInt(0);
   let x = n;
-  let y = (x + 1n) / 2n;
-  while (y < x) { x = y; y = (x + n / x) / 2n; }
+  let y = (x + BigInt(1)) / BigInt(2);
+  while (y < x) { x = y; y = (x + n / x) / BigInt(2); }
   return x;
 }
 
@@ -15,7 +15,7 @@ export function bigIntSqrt(n: bigint): bigint {
 // sqrtPriceX96 = sqrt(price) * 2^96
 // We avoid float overflow by computing sqrt(price * 2^192) purely in BigInt.
 export function priceToSqrtPriceX96(price: number): bigint {
-  const Q96 = BigInt(2) ** BigInt(96);
+  const Q96 = BigInt(1) << BigInt(96);
   // Scale price by 1e18 so we can express it as a bigint without decimals
   const SCALE = BigInt(1_000_000_000_000_000_000);
   const priceScaled = BigInt(Math.round(price * 1e18));
@@ -65,15 +65,15 @@ export function formatFee(feePips: number): string {
 
 // ─── Tick spacing options ──────────────────────────────────────────────────────
 export const TICK_SPACING_OPTIONS = [
-  { label: "Stable (1)",     value: 1   },
-  { label: "Low (10)",       value: 10  },
-  { label: "Standard (60)",  value: 60  },
-  { label: "Wide (200)",     value: 200 },
+  { label: "Stable (1)", value: 1 },
+  { label: "Low (10)", value: 10 },
+  { label: "Standard (60)", value: 60 },
+  { label: "Wide (200)", value: 200 },
 ] as const;
 
 // ─── Common initial price options ─────────────────────────────────────────────
 export const INITIAL_PRICE_OPTIONS = [
-  { label: "1:1 (equal)",   sqrtPriceX96: SQRT_PRICE_1_1 },
-  { label: "1:2",           sqrtPriceX96: SQRT_PRICE_1_2 },
-  { label: "2:1",           sqrtPriceX96: SQRT_PRICE_2_1 },
+  { label: "1:1 (equal)", sqrtPriceX96: SQRT_PRICE_1_1 },
+  { label: "1:2", sqrtPriceX96: SQRT_PRICE_1_2 },
+  { label: "2:1", sqrtPriceX96: SQRT_PRICE_2_1 },
 ] as const;

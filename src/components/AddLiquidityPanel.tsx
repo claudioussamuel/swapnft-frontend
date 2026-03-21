@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useAccount, useChainId, useWriteContract } from "wagmi";
+import { useAccount, useChainId, useWriteContract, useConfig } from "wagmi";
 import { waitForTransactionReceipt } from "@wagmi/core";
 import { parseUnits } from "viem";
 import { usePoolKey } from "@/lib/poolKeyStore";
@@ -14,7 +14,6 @@ import {
   getChainAddresses,
   POOL_MODIFY_LIQUIDITY_TEST_ABI,
 } from "@/lib/contracts";
-import { config } from "@/lib/wagmi";
 
 type TxStep = "idle" | "approving" | "confirm" | "pending" | "success" | "error";
 
@@ -33,6 +32,7 @@ export function AddLiquidityPanel() {
   const chain = useChainId();
   const addresses = getChainAddresses(chain);
   const { poolKey } = usePoolKey();
+  const config = useConfig();
 
   const [amount0, setAmount0] = useState("");
   const [amount1, setAmount1] = useState("");

@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { useAccount, useChainId, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { useAccount, useChainId, useWriteContract, useWaitForTransactionReceipt, useConfig } from "wagmi";
 import {
   isAddress,
 } from "viem";
 import { getChainAddresses, ERC20_ABI, POOL_SWAP_TEST_ABI } from "@/lib/contracts";
-import { config } from "@/lib/wagmi";
+
 import { waitForTransactionReceipt } from "@wagmi/core";
 
 interface PoolKey {
@@ -30,6 +30,7 @@ export function useUniversalRouterSwap() {
   const { address } = useAccount();
   const chainId = useChainId();
   const addresses = getChainAddresses(chainId);
+  const config = useConfig();
 
   const [txStep, setTxStep] = useState<"idle" | "permitting" | "swapping" | "pending" | "success" | "error">("idle");
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
