@@ -37,7 +37,7 @@ export default function PoolPage() {
           <div>
             <div className="page-header__eyebrow">
               <Link href="/" className="page-header__back">
-                ← Create pool
+                ← Mint tokens
               </Link>
             </div>
             <h1 className="page-header__title">Pool</h1>

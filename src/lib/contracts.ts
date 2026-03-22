@@ -21,15 +21,15 @@ const envAddress = (value?: string): `0x${string}` =>
 const chainAddressesById: Record<number, SwapImpactAddresses> = {
   1301: {
     POOL_MANAGER: "0x00b036b58a818b1bc34d502d3fe730db729e62ac",
-    HOOK: "0x51C982655087c78b3280f0440B5d714683c320c0",
-    NFT: "0xd035b10DC2f0627393d255cbbDa4ef270eAEd906",
+    HOOK: "0x92fd24D65d30Ec0Dc7d97b74d95aCC5437d720C0",
+    NFT: "0x3447be68F4E28DeD2B97779732dD6818C540e27B",
     POSITION_MANAGER: "0xf969aee60879c54baaed9f3ed26147db216fd664",
-    TOKEN_ZERO: "0x97ed6e050640ca2750Bf9a5b9796F422b6639813",
-    TOKEN_ONE: "0xbF93B0C894B3C42dDB5C88AA11aFf71f0f3d5E38",
+    TOKEN_ZERO: "0x353d99882b075127996b7A8eFc38DC48428E3392",
+    TOKEN_ONE: "0x65791f4170f12cE5104280202Cf8D03146CABC16",
     UNIVERSAL_ROUTER: "0xf70536b3bcc1bd1a972dc186a2cf84cc6da6be5d",
     PERMIT2: "0x000000000022D473030F116dDEE9F6B43aC78BA3",
-    POOL_MODIFY_LIQUIDITY_TEST: "0x0C478023803a644c94c4CE1C1e7b9A087e411B0A",
-    POOL_SWAP_TEST: "0x5fa728c0a5cfd51bee4b060773f50554c0c8a7ab",
+    POOL_MODIFY_LIQUIDITY_TEST: "0x5fa728c0a5cfd51bee4b060773f50554c0c8a7ab",
+    POOL_SWAP_TEST: "0x9140a78c1a137c7ff1c151ec8231272af78a99a4",
   },
 
   11155111: {
@@ -37,8 +37,8 @@ const chainAddressesById: Record<number, SwapImpactAddresses> = {
     HOOK: "0x51C982655087c78b3280f0440B5d714683c320c0",
     NFT: "0xd035b10DC2f0627393d255cbbDa4ef270eAEd906",
     POSITION_MANAGER: "0x429ba70129df741B2Ca2a85BC3A2a3328e5c09b4",
-    TOKEN_ZERO: "0x97ed6e050640ca2750Bf9a5b9796F422b6639813",
-    TOKEN_ONE: "0xbF93B0C894B3C42dDB5C88AA11aFf71f0f3d5E38",
+    TOKEN_ZERO: "0x69Ca016E74BcBe584FCDe9D16834c83bD2567116",
+    TOKEN_ONE: "0xb5e2920Edfd659Feb8b949E4623667057b0D4127",
     UNIVERSAL_ROUTER: "0x3A9D48AB9751398BbFa63ad67599Bb04e4BdF98b",
     PERMIT2: "0x000000000022D473030F116dDEE9F6B43aC78BA3",
     POOL_MODIFY_LIQUIDITY_TEST: "0x0C478023803a644c94c4CE1C1e7b9A087e411B0A",
@@ -364,6 +364,11 @@ export const ERC20_ABI = [
     type: "function", name: "approve", stateMutability: "nonpayable",
     inputs: [{ name: "spender", type: "address" }, { name: "amount", type: "uint256" }],
     outputs: [{ name: "", type: "bool" }],
+  },
+  {
+    type: "function", name: "mint", stateMutability: "nonpayable",
+    inputs: [{ name: "to", type: "address" }, { name: "amount", type: "uint256" }],
+    outputs: [],
   },
 ] as const;
 

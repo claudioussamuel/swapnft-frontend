@@ -1,5 +1,5 @@
 import { Navbar } from "@/components/Navbar";
-import { CreatePool } from "@/components/CreatePool";
+import { MintTokens } from "@/components/MintTokens";
 import { TierTable } from "@/components/TierTable";
 import Link from "next/link";
 
@@ -27,10 +27,10 @@ export default function Home() {
         <div className="grid">
           <div className="card card--main">
             <div className="card__header">
-              <h2 className="card__title">Create a pool</h2>
-              <p className="card__sub">Deploy a Uniswap v4 pool with the SwapImpact hook</p>
+              <h2 className="card__title">Mint Test Tokens</h2>
+              <p className="card__sub">Mint mock token0 or token1 to test out the application</p>
             </div>
-            <CreatePool />
+            <MintTokens />
           </div>
 
           <div className="sidebar">
@@ -47,19 +47,19 @@ export default function Home() {
               <ol className="how-list">
                 <li className="how-list__item">
                   <span className="how-list__num">1</span>
-                  <span>Create a pool with this hook attached</span>
+                  <span>Mint test tokens from this page so you have funds</span>
                 </li>
                 <li className="how-list__item">
                   <span className="how-list__num">2</span>
-                  <span>Swap tokens — the hook measures your price impact and mints a tier NFT</span>
+                  <span>Move to the Pool page to provide liquidity or trade</span>
                 </li>
                 <li className="how-list__item">
                   <span className="how-list__num">3</span>
-                  <span>Your next swap uses the discount and burns the NFT</span>
+                  <span>Swap tokens — the hook measures your impact and gives you an NFT</span>
                 </li>
                 <li className="how-list__item">
                   <span className="how-list__num">4</span>
-                  <span>A new NFT is minted based on the next swap's impact</span>
+                  <span>Your next swap consumes the NFT for a fee discount</span>
                 </li>
               </ol>
             </div>
