@@ -23,8 +23,8 @@ export function PoolKeyForm({ onSet }: { onSet?: () => void }) {
   useEffect(() => {
     if (poolKey) return;
     if (!isAddress(tokenA) || !isAddress(tokenB)) return;
-    setPoolKey(buildPoolKey(tokenA, tokenB, tickSpacing));
-  }, [poolKey, tokenA, tokenB, tickSpacing, setPoolKey, buildPoolKey]);
+    setPoolKey(buildPoolKey(tokenA, tokenB, addresses.HOOK, tickSpacing));
+  }, [poolKey, tokenA, tokenB, tickSpacing, addresses.HOOK, setPoolKey, buildPoolKey]);
 
   const handleSet = () => {
     const errs: typeof errors = {};
@@ -35,7 +35,7 @@ export function PoolKeyForm({ onSet }: { onSet?: () => void }) {
     }
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
-    setPoolKey(buildPoolKey(tokenA, tokenB, tickSpacing));
+    setPoolKey(buildPoolKey(tokenA, tokenB, addresses.HOOK, tickSpacing));
     onSet?.();
   };
 

@@ -20,7 +20,7 @@ interface PoolKeyContextValue {
   poolKey: PoolKeyState | null;
   setPoolKey: (key: PoolKeyState | null) => void;
   // Build a PoolKey from two token addresses (handles sorting)
-  buildPoolKey: (tokenA: string, tokenB: string, tickSpacing?: number) => PoolKeyState;
+  buildPoolKey: (tokenA: string, tokenB: string, hookAddress: string, tickSpacing?: number) => PoolKeyState;
 }
 
 const PoolKeyContext = createContext<PoolKeyContextValue | null>(null);
@@ -28,14 +28,14 @@ const PoolKeyContext = createContext<PoolKeyContextValue | null>(null);
 export function PoolKeyProvider({ children }: { children: ReactNode }) {
   const [poolKey, setPoolKey] = useState<PoolKeyState | null>(null);
 
-  const buildPoolKey = (tokenA: string, tokenB: string, tickSpacing = 60): PoolKeyState => {
+  const buildPoolKey = (tokenA: string, tokenB: string, hookAddress: string, tickSpacing = 60): PoolKeyState => {
     const [c0, c1] = sortTokens(tokenA as `0x${string}`, tokenB as `0x${string}`);
     return {
       currency0: c0,
       currency1: c1,
       fee: DYNAMIC_FEE_FLAG,
       tickSpacing,
-      hooks: ADDRESSES.HOOK,
+      hooks: hookAddress as `0x${string}`,
     };
   };
 

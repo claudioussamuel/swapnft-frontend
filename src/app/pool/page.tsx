@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useChainId } from "wagmi";
 import { Navbar } from "@/components/Navbar";
+import { CreatePool } from "@/components/CreatePool";
 import { SwapPanel } from "@/components/SwapPanel";
 import { AddLiquidityPanel } from "@/components/AddLiquidityPanel";
 import { RemoveLiquidityPanel } from "@/components/RemoveLiquidityPanel";
@@ -11,10 +12,10 @@ import { usePoolKey } from "@/lib/poolKeyStore";
 import { getChainAddresses } from "@/lib/contracts";
 import Link from "next/link";
 
-type Tab = "swap" | "add" | "remove";
+type Tab = "create" | "swap" | "add" | "remove";
 
 export default function PoolPage() {
-  const [tab, setTab] = useState<Tab>("swap");
+  const [tab, setTab] = useState<Tab>("create");
   const { poolKey, setPoolKey, buildPoolKey } = usePoolKey();
   const  chain  = useChainId();
   const addresses = getChainAddresses(chain);
@@ -24,8 +25,8 @@ export default function PoolPage() {
     const tokenA = addresses.TOKEN_ZERO;
     const tokenB = addresses.TOKEN_ONE;
     if (!tokenA || !tokenB) return;
-    setPoolKey(buildPoolKey(tokenA, tokenB, 60));
-  }, [poolKey, addresses.TOKEN_ZERO, addresses.TOKEN_ONE, setPoolKey, buildPoolKey]);
+    setPoolKey(buildPoolKey(tokenA, tokenB, addresses.HOOK, 60));
+  }, [poolKey, addresses.TOKEN_ZERO, addresses.TOKEN_ONE, addresses.HOOK, setPoolKey, buildPoolKey]);
 
   return (
     <div className="app">
@@ -54,20 +55,22 @@ export default function PoolPage() {
           <div className="card card--main">
             {/* Tab bar */}
             <div className="tab-bar">
-              {(["swap", "add", "remove"] as Tab[]).map(t => (
+              {(["create", "swap", "add", "remove"] as Tab[]).map(t => (
                 <button
                   key={t}
                   className={`tab-bar__tab ${tab === t ? "tab-bar__tab--active" : ""}`}
                   onClick={() => setTab(t)}
                   type="button"
                 >
-                  {t === "swap"   ? "Swap"
+                  {t === "create" ? "Create pool"
+                  : t === "swap"   ? "Swap"
                   : t === "add"   ? "Add liquidity"
                   : "Remove liquidity"}
                 </button>
               ))}
             </div>
 
+            {tab === "create" && <CreatePool />}
             {tab === "swap"   && <SwapPanel />}
             {tab === "add"    && <AddLiquidityPanel />}
             {tab === "remove" && <RemoveLiquidityPanel />}

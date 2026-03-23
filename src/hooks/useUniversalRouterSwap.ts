@@ -124,6 +124,10 @@ export function useUniversalRouterSwap() {
 
         setTxHash(hash);
         setTxStep("pending");
+        
+        await waitForTransactionReceipt(config, { hash });
+        setTxStep("success");
+        
         return hash;
       } catch (err) {
         setError(err instanceof Error ? err.message : "Swap execution failed");

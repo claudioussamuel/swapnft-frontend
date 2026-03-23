@@ -32,7 +32,7 @@ export function CreatePool() {
   const [step, setStep] = useState<Step>("idle");
   const [txHash, setTxHash] = useState<`0x${string}` | undefined>();
   const [poolId, setPoolId] = useState<`0x${string}` | undefined>();
-  const [errors, setErrors] = useState<{ token0?: string; token1?: string; price?: string }>({});
+  const [errors, setErrors] = useState<{ token0?: string; token1?: string; price?: string; txError?: string }>({});
 
   // ── Wagmi write ───────────────────────────────────────────────────────────
   const { writeContractAsync } = useWriteContract();
@@ -94,6 +94,11 @@ export function CreatePool() {
       setStep("pending"); // success is set by the useEffect above once isMined
     } catch (e: unknown) {
       console.error(e);
+      let errMsg = String(e);
+      if (e instanceof Error) {
+        errMsg = (e as any).shortMessage || e.message || errMsg;
+      }
+      setErrors((prev) => ({ ...prev, txError: errMsg }));
       setStep("error");
     }
   };
@@ -269,9 +274,14 @@ export function CreatePool() {
       </button>
 
       {step === "error" && (
-        <p className="create-pool__error create-pool__error--tx">
-          Transaction failed or was rejected. Check your wallet and try again.
-        </p>
+        <div className="create-pool__error create-pool__error--tx">
+          <p>Transaction failed or was rejected. Check your wallet and try again.</p>
+          {errors.txError && (
+            <pre style={{ marginTop: "0.5rem", fontSize: "0.85em", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
+              {errors.txError}
+            </pre>
+          )}
+        </div>
       )}
     </div>
   );
